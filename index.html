@@ -129,17 +129,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             const generateButton = document.getElementById('generate-button');
             const outputMessage = document.getElementById('output-message');
+            const imageInput = document.getElementById('image-file');
 
             generateButton.addEventListener('click', () => {
-                // Capturar datos del formulario
                 const name = document.getElementById('name').value;
                 const description = document.getElementById('description').value;
                 const author = document.getElementById('author').value;
                 const gender = document.getElementById('gender').value;
-                const startFrequency = document.getElementById('start-frequency').value;
-                const frequencyIncrement = document.getElementById('frequency-increment').value;
-                const sampleCount = document.getElementById('sample-count').value;
-                const imageFile = document.getElementById('image-file').files[0];
+                const startFrequency = parseInt(document.getElementById('start-frequency').value);
+                const frequencyIncrement = parseInt(document.getElementById('frequency-increment').value);
+                const sampleCount = parseInt(document.getElementById('sample-count').value);
+                const imageFile = imageInput.files[0];
 
                 // Validar que todos los campos estén completos
                 if (!name || !description || !author || !gender || !startFrequency || !frequencyIncrement || !sampleCount || !imageFile) {
@@ -150,18 +150,34 @@
                 // Crear archivo ZIP usando JSZip
                 const zip = new JSZip();
 
-                // Generar archivo character.txt basado en el contenido proporcionado
+                // Generar archivo character.txt
                 const characterTxt = `
 name=${name}
 image=${imageFile.name}
-sample=sample_audio.wav
+sample=sample_1.wav
 性別:${gender}　年齢:${startFrequency}
-好きなもの:${frequencyIncrement}
+好きなもの:${description}
 -------------------------:
 web:http://voicebankexample.com
 ${name}音声ライブラリー:(C) ${author} 2025 All Rights Reserved.
                 `;
                 zip.file("character.txt", characterTxt.trim());
+
+                // Generar archivo oto.ini
+                let otoContent = '';
+                for (let i = 0; i < sampleCount; i++) {
+                    const sampleName = `sample_${i + 1}.wav`;
+                    otoContent += `${sampleName},0,0,100,0\n`;
+                }
+                zip.file("oto.ini", otoContent.trim());
+
+                // Generar archivos .wav simulados
+                const sampleFolder = zip.folder("samples");
+                for (let i = 0; i < sampleCount; 150) {
+                    const frequency = startFrequency + (i * frequencyIncrement);
+                    const sampleData = `Simulado tono ${frequency} Hz`;
+                    sampleFolder.file(`sample_${i + 1}.wav`, sampleData);
+                }
 
                 // Añadir imagen al ZIP
                 const reader = new FileReader();
