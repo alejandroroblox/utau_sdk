@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Voicebank</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1.5em;
+            text-align: center;
+        }
+
+        main {
+            margin: 2em auto;
+            padding: 1em;
+            max-width: 700px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1em;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input, textarea, select, button {
+            font-size: 1em;
+            padding: 0.5em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            padding: 0.7em;
+            text-align: center;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1em;
+            margin-top: 2em;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Generador de Voicebank</h1>
+        <p>Crea y descarga un archivo ZIP con tu voicebank personalizado.</p>
+    </header>
+    <main>
+        <section id="configuration">
+            <h2>Configuración del Voicebank</h2>
+            <form id="voicebank-form">
+                <label for="name">Nombre del Voicebank:</label>
+                <input type="text" id="name" placeholder="Ej: Mi Voicebank" required>
+                
+                <label for="description">Descripción:</label>
+                <textarea id="description" placeholder="Describe tu voicebank aquí..." required></textarea>
+                
+                <label for="author">Autor:</label>
+                <input type="text" id="author" placeholder="Tu nombre" required>
+                
+                <label for="gender">Género:</label>
+                <select id="gender" required>
+                    <option value="Femenino">Femenino</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Neutro">Neutro</option>
+                </select>
+                
+                <h3>Configuración de Samples</h3>
+                <label for="start-frequency">Frecuencia inicial (Hz):</label>
+                <input type="number" id="start-frequency" placeholder="Ej: 200" required>
+                
+                <label for="frequency-increment">Incremento de frecuencia (Hz):</label>
+                <input type="number" id="frequency-increment" placeholder="Ej: 50" required>
+                
+                <label for="sample-count">Cantidad de tonos:</label>
+                <input type="number" id="sample-count" placeholder="Ej: 10" required>
+
+                <h3>Importar Imagen</h3>
+                <label for="image-file">Sube una imagen (.bmp):</label>
+                <input type="file" id="image-file" accept=".bmp" required>
+                
+                <button type="button" id="generate-button">Generar Voicebank ZIP</button>
+            </form>
+        </section>
+        
+        <section id="output">
+            <h2>Descargar Voicebank</h2>
+            <p id="output-message"></p>
+        </section>
+    </main>
+    <footer>
+        <p>© 2025 Generador de Voicebank. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const generateButton = document.getElementById('generate-button');
+            const outputMessage = document.getElementById('output-message');
+
+            generateButton.addEventListener('click', () => {
+                // Capturar datos del formulario
+                const name = document.getElementById('name').value;
+                const description = document.getElementById('description').value;
+                const author = document.getElementById('author').value;
+                const gender = document.getElementById('gender').value;
+                const startFrequency = document.getElementById('start-frequency').value;
+                const frequencyIncrement = document.getElementById('frequency-increment').value;
+                const sampleCount = document.getElementById('sample-count').value;
+                const imageFile = document.getElementById('image-file').files[0];
+
+                // Validar que todos los campos estén completos
+                if (!name || !description || !author || !gender || !startFrequency || !frequencyIncrement || !sampleCount || !imageFile) {
+                    outputMessage.textContent = "Por favor, completa todos los campos y sube una imagen antes de generar.";
+                    return;
+                }
+
+                // Crear archivo ZIP usando JSZip
+                const zip = new JSZip();
+
+                // Generar archivo character.txt basado en el contenido proporcionado
+                const characterTxt = `
+name=${name}
+image=${imageFile.name}
+sample=sample_audio.wav
+性別:${gender}　年齢:${startFrequency}
+好きなもの:${frequencyIncrement}
+-------------------------:
+web:http://voicebankexample.com
+${name}音声ライブラリー:(C) ${author} 2025 All Rights Reserved.
+                `;
+                zip.file("character.txt", characterTxt.trim());
+
+                // Añadir imagen al ZIP
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    zip.file(imageFile.name, event.target.result, { binary: true });
+
+                    // Generar y descargar archivo ZIP
+                    zip.generateAsync({ type: "blob" }).then((content) => {
+                        const zipName = `${name}_voicebank.zip`;
+                        saveAs(content, zipName);
+                        outputMessage.textContent = `Voicebank generado exitosamente: ${zipName}`;
+                    });
+                };
+                reader.readAsArrayBuffer(imageFile);
+            });
+        });
+    </script>
+</body>
+</html>
